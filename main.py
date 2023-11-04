@@ -3,30 +3,34 @@ from gtts import gTTS
 from playsound import playsound
 import tempfile
 
+from tkinter import ttk
 from tkinter import *
 import random
 import pandas as pd
 import os
+
 
 BACKGROUND_COLOR = "B1DDC6"
 to_learn = {}
 current_card = {}
 current_direction = "malay_to_english"  # Default direction
 
+# Create a variable to track the "Auto-pronounce" feature state
+auto_pronounce = False
 
 # ---------------------- FRONT FLASH CARD FUNCTIONALITY ----------------------- #
 # Creating a list of dictionaries from the CSV file using a dataframe
 
 
 try:
-    df = pd.read_csv("data/words_to_learn.csv")
+    dataframe = pd.read_csv("data/words_to_learn.csv")
 
 except FileNotFoundError:
-    df = pd.read_csv("data/1-GettingStarted.csv")
-    to_learn = df.to_dict(orient="records")
+    dataframe = pd.read_csv("data/1-GettingStarted.csv")
+    to_learn = dataframe.to_dict(orient="records")
 
 else:
-    to_learn = df.to_dict(orient="records")
+    to_learn = dataframe.to_dict(orient="records")
 
 
 # Define a function to initialize the flashcards (used for program restart)
@@ -69,11 +73,15 @@ initialize_flashcards("data/words_to_learn.csv")
 
 
 # Google Text to Speech
-def text_to_speech(text):
-    tts = gTTS(text, lang='ms')  # 'en' for English, 'ms' for Malay
-    temp_file = tempfile.NamedTemporaryFile(delete=True)
-    tts.save(temp_file.name + ".mp3")
-    playsound(temp_file.name + ".mp3")
+# Updated text_to_speech function to consider the "Auto-pronounce" and manual pronunciation
+def text_to_speech(text, manual=False):
+    if (not hasattr(text_to_speech, "pronounced") or not text_to_speech.pronounced) or manual:
+        tts = gTTS(text, lang='ms')  # Pronounce Malay words
+        temp_file = tempfile.NamedTemporaryFile(delete=True)
+        tts.save(temp_file.name + ".mp3")
+        playsound(temp_file.name + ".mp3")
+        if not manual:
+            text_to_speech.pronounced = True
 
 
 # Function to show the number of remaining words
@@ -83,6 +91,12 @@ def get_remaining_words_count():
         return len(df)
     except FileNotFoundError:
         return 0
+
+
+# Function to toggle the "Auto-pronounce" feature
+def toggle_auto_pronounce():
+    global auto_pronounce
+    auto_pronounce = auto_pronounce_var.get()
 
 
 def is_known():
@@ -103,14 +117,18 @@ def is_known():
         button_wrong.config(state=DISABLED)
 
 
+# In the "toggle_direction" function, update the "Auto-pronounce" state
 def toggle_direction():
     global current_direction
+    global auto_pronounce
     if current_direction == "malay_to_english":
         current_direction = "english_to_malay"
-        button_direction.config(text="Switch to Malay to English")
+        button_direction.config(text="Switch to English to Malay")
+        # Disable "Auto-pronounce" when the direction changes
+        auto_pronounce = False
     else:
         current_direction = "malay_to_english"
-        button_direction.config(text="Switch to English to Malay")
+        button_direction.config(text="Switch to Malay to English")
 
 
 def toggle_translation():
@@ -148,9 +166,13 @@ def restart_program():
     word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
 
 
+# In the "next_card" function, call the text_to_speech function for the first card
 def next_card():
     global current_card, flip_timer
     root.after_cancel(flip_timer)
+
+    # Reset the 'pronounced' attribute each time a new card is displayed
+    text_to_speech.pronounced = False
 
     if to_learn:
         current_card = random.choice(to_learn)
@@ -162,23 +184,28 @@ def next_card():
             canvas.itemconfig(card_title, text="English", fill="black")
         canvas.itemconfig(card_background, image=card_front_img)
         flip_timer = root.after(3000, func=flip_card)
+
+        # Check if "Auto-pronounce" is enabled and the direction is "malay_to_english"
+        if auto_pronounce and current_direction == "malay_to_english":
+            # Delay the pronunciation by 1000 milliseconds (1 second)
+            root.after(1000, lambda: text_to_speech(current_card["Malay"]))
     else:
-        # Handle the case where there are no more words to learn
-        canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn.")
+        canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
         canvas.itemconfig(card_word, text="")
-        button_right.config(state=DISABLED)  # Disable the "Right" button
-
-        # Optionally, you can also disable the "Wrong" button in this case
+        button_right.config(state=DISABLED)
         button_wrong.config(state=DISABLED)
-
-        # Load the selected file from the dropdown list
         initialize_flashcards(f"data/{selected_file_var.get()}")
 
 
+# In the "flip_card" function, call the text_to_speech function
 def flip_card():
     if current_direction == "malay_to_english":
         canvas.itemconfig(card_title, text="English", fill="white")
         canvas.itemconfig(card_word, text=current_card["English"], fill="white")
+
+        # Pronounce the Malay word if "Auto-pronounce" is enabled
+        text_to_speech(current_card["Malay"])
+
     else:
         canvas.itemconfig(card_title, text="Malay", fill="white")
         canvas.itemconfig(card_word, text=current_card["Malay"], fill="white")
@@ -226,7 +253,7 @@ button_toggle = Button(root, text="Toggle Translation", font=("Arial", 15, "bold
 button_toggle.place(x=900, y=100)
 
 # Button to restart the program
-button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "bold"), width=25, command=restart_program)
+button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "normal"), width=25, command=restart_program)
 button_restart.place(x=900, y=450)
 
 # Add a dropdown list to select the file
@@ -243,13 +270,26 @@ load_file_button = Button(root, text="Load selected File", font=("Arial", 14, "n
 load_file_button.place(x=900, y=300)
 
 # Button for Google text to speech
-pronounce_button = Button(root, text="Pronounce", font=("Arial", 14, "bold"), width=25, command=lambda: text_to_speech(current_card["Malay"]))  # You can adjust this based on your card data
+pronounce_button = Button(root, text="Pronounce", font=("Arial", 14, "bold"), width=25, command=lambda: text_to_speech(current_card["Malay"], manual=True))
 pronounce_button.place(x=900, y=150)
 
 # Show how many words remain in words to learn list
 word_count_label = Label(root, text=f"Words to Learn: {get_remaining_words_count()}", font=("Arial", 14))
 word_count_label.place(x=900, y=420)
 
+# NEW on/off switch Toggle button for "Auto-pronounce"
+# -------- Auto Pronounce Check Button --------#
+
+# Create a BooleanVar to track the state of Auto Pronounce
+auto_pronounce_var = BooleanVar()
+auto_pronounce_var.set(auto_pronounce)  # Initialize the state
+
+# Create a style for the Auto pronounce checkbox button
+style = ttk.Style()
+style.configure("TCheckbutton", font=("Arial", 15))
+# Replace the "Toggle button for Auto-pronounce" section
+auto_pronounce_switch = ttk.Checkbutton(root, text="Auto Pronounce?", variable=auto_pronounce_var, command=toggle_auto_pronounce)
+auto_pronounce_switch.place(x=900, y=500)
 
 # ---------------------------- LOAD THE PROGRAM ------------------------------- #
 

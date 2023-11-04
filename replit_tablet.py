@@ -226,7 +226,7 @@ button_toggle = Button(root, text="Toggle Translation", font=("Arial", 15, "bold
 button_toggle.place(x=900, y=100)
 
 # Button to restart the program
-button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "bold"), width=25, command=restart_program)
+button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "normal"), width=25, command=restart_program)
 button_restart.place(x=900, y=450)
 
 # Add a dropdown list to select the file
