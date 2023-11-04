@@ -1,3 +1,8 @@
+# Google text to voice libraries
+from gtts import gTTS
+from playsound import playsound
+import tempfile
+
 from tkinter import *
 import random
 import pandas as pd
@@ -63,6 +68,23 @@ def load_selected_file():
 initialize_flashcards("data/words_to_learn.csv")
 
 
+# Google Text to Speech
+def text_to_speech(text):
+    tts = gTTS(text, lang='ms')  # 'en' for English, 'ms' for Malay
+    temp_file = tempfile.NamedTemporaryFile(delete=True)
+    tts.save(temp_file.name + ".mp3")
+    playsound(temp_file.name + ".mp3")
+
+
+# Function to show the number of remaining words
+def get_remaining_words_count():
+    try:
+        df = pd.read_csv("data/words_to_learn.csv")
+        return len(df)
+    except FileNotFoundError:
+        return 0
+
+
 def is_known():
     global current_card
     if current_card in to_learn:
@@ -70,6 +92,7 @@ def is_known():
         data = pd.DataFrame(to_learn)
         data.to_csv("data/words_to_learn.csv", index=False)
         next_card()
+        word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
     else:
         # Handle the case when there are no more words to learn
         canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn.")
@@ -120,6 +143,9 @@ def restart_program():
     button_right.config(state=NORMAL)
 
     next_card()  # Load the next card after restarting
+
+    # Update the word count label
+    word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
 
 
 def next_card():
@@ -192,8 +218,8 @@ button_right.place(x=470, y=460)
 # ---------------------------- BUTTONS FOR FUNCTIONS ------------------------------- #
 
 # Button to toggle direction
-button_direction = Button(root, text="Switch to English to Malay", font=("Arial", 15, "bold"), width=25, command=toggle_direction)
-button_direction.place(x=900, y=50)
+button_direction = Button(root, text="Switch to English to Malay", font=("Arial", 10, "bold"), command=toggle_direction)
+button_direction.place(x=60, y=50)
 
 # Button to toggle translation
 button_toggle = Button(root, text="Toggle Translation", font=("Arial", 10, "bold"), command=toggle_translation)
@@ -215,6 +241,15 @@ file_dropdown.place(x=670, y=50)
 # Button to load the selected file
 load_file_button = Button(root, text="Load selected File", font=("Arial", 10, "normal"), command=load_selected_file)
 load_file_button.place(x=670, y=15)
+
+# Button for Google text to speech
+pronounce_button = Button(root, text="Pronounce", command=lambda: text_to_speech(current_card["Malay"]))  # You can adjust this based on your card data
+pronounce_button.place(x=295, y=15)
+
+# Show how many words remain in words to learn list
+word_count_label = Label(root, text=f"Words to Learn: {get_remaining_words_count()}", font=("Arial", 14))
+word_count_label.place(x=470, y=15)
+
 
 # ---------------------------- LOAD THE PROGRAM ------------------------------- #
 
