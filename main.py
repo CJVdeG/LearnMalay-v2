@@ -18,6 +18,9 @@ current_direction = "malay_to_english"  # Default direction
 # Create a variable to track the "Auto-pronounce" feature state
 auto_pronounce = False
 
+# Add variable for storing after IDs
+pending_pronunciation = None
+
 # ---------------------- FRONT FLASH CARD FUNCTIONALITY ----------------------- #
 # Creating a list of dictionaries from the CSV file using a dataframe
 
@@ -74,14 +77,25 @@ initialize_flashcards("data/words_to_learn.csv")
 
 # Google Text to Speech
 # Updated text_to_speech function to consider the "Auto-pronounce" and manual pronunciation
+# Updated text_to_speech function to consider the "Auto-pronounce" and manual pronunciation
 def text_to_speech(text, manual=False):
-    if (not hasattr(text_to_speech, "pronounced") or not text_to_speech.pronounced) or manual:
+    global pending_pronunciation
+    if auto_pronounce and not manual:
         tts = gTTS(text, lang='ms')  # Pronounce Malay words
         temp_file = tempfile.NamedTemporaryFile(delete=True)
         tts.save(temp_file.name + ".mp3")
         playsound(temp_file.name + ".mp3")
-        if not manual:
-            text_to_speech.pronounced = True
+        pending_pronunciation = None  # Reset the pending pronunciation after it's played
+    elif not auto_pronounce and not manual:
+        # If "Auto Pronounce" is off and it's not a manual pronunciation, do nothing
+        pending_pronunciation = None
+    else:
+        # Handle manual pronunciation
+        tts = gTTS(text, lang='ms')
+        temp_file = tempfile.NamedTemporaryFile(delete=True)
+        tts.save(temp_file.name + ".mp3")
+        playsound(temp_file.name + ".mp3")
+        pending_pronunciation = None
 
 
 # Function to show the number of remaining words
@@ -168,8 +182,11 @@ def restart_program():
 
 # In the "next_card" function, call the text_to_speech function for the first card
 def next_card():
-    global current_card, flip_timer
+    global current_card, flip_timer, pending_pronunciation
     root.after_cancel(flip_timer)
+
+    if pending_pronunciation is not None:
+        root.after_cancel(pending_pronunciation)  # Cancel any pending pronunciation
 
     # Reset the 'pronounced' attribute each time a new card is displayed
     text_to_speech.pronounced = False
@@ -188,7 +205,7 @@ def next_card():
         # Check if "Auto-pronounce" is enabled and the direction is "malay_to_english"
         if auto_pronounce and current_direction == "malay_to_english":
             # Delay the pronunciation by 1000 milliseconds (1 second)
-            root.after(1000, lambda: text_to_speech(current_card["Malay"]))
+            pending_pronunciation = root.after(1000, lambda: text_to_speech(current_card["Malay"]))
     else:
         canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
         canvas.itemconfig(card_word, text="")
@@ -197,21 +214,21 @@ def next_card():
         initialize_flashcards(f"data/{selected_file_var.get()}")
 
 
-# In the "flip_card" function, call the text_to_speech function
+# In the "flip_card" function, call the text_to_speech function for the Malay word only if "Auto Pronounce" is enabled
 def flip_card():
     if current_direction == "malay_to_english":
         canvas.itemconfig(card_title, text="English", fill="white")
         canvas.itemconfig(card_word, text=current_card["English"], fill="white")
 
-        # Pronounce the Malay word if "Auto-pronounce" is enabled
-        text_to_speech(current_card["Malay"])
+        # Pronounce the Malay word if "Auto Pronounce" is enabled
+        if auto_pronounce:
+            text_to_speech(current_card["Malay"])
 
     else:
         canvas.itemconfig(card_title, text="Malay", fill="white")
         canvas.itemconfig(card_word, text=current_card["Malay"], fill="white")
 
     canvas.itemconfig(card_background, image=card_back_img)
-
 
 # ---------------------------- UI SETUP ------------------------------- #
 root = Tk()
