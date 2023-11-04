@@ -59,8 +59,8 @@ def load_selected_file():
     next_card()
 
 
-# Call this at the beginning of your script to initialize flashcards with a default file
-initialize_flashcards("data/1-GettingStarted.csv")
+# Call this at the beginning of the script to initialize flashcards with a default file
+initialize_flashcards("data/words_to_learn.csv")
 
 
 def is_known():
@@ -192,7 +192,7 @@ button_right.place(x=470, y=360)
 # ---------------------------- BUTTONS FOR FUNCTIONS ------------------------------- #
 
 # Button to toggle direction
-button_direction = Button(root, text="Switch to Malay to English", font=("Arial", 15, "bold"), width=25, command=toggle_direction)
+button_direction = Button(root, text="Switch to English to Malay", font=("Arial", 15, "bold"), width=25, command=toggle_direction)
 button_direction.place(x=900, y=50)
 
 # Button to toggle translation
