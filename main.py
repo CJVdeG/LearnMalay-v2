@@ -1,4 +1,4 @@
-# Google text to voice libraries
+# ---------------------------- IMPORTS ------------------------------- #
 from gtts import gTTS
 from playsound import playsound
 import tempfile
@@ -9,7 +9,7 @@ import random
 import pandas as pd
 import os
 
-
+# ---------------------------- VARIABLE DECLARATION ------------------------------- #
 BACKGROUND_COLOR = "B1DDC6"
 to_learn = {}
 current_card = {}
@@ -24,7 +24,6 @@ pending_pronunciation = None
 # ---------------------- FRONT FLASH CARD FUNCTIONALITY ----------------------- #
 # Creating a list of dictionaries from the CSV file using a dataframe
 
-
 try:
     dataframe = pd.read_csv("data/words_to_learn.csv")
 
@@ -36,6 +35,7 @@ else:
     to_learn = dataframe.to_dict(orient="records")
 
 
+# ---------------------------- INITIALIZE FLASHCARDS ------------------------------- #
 # Define a function to initialize the flashcards (used for program restart)
 def initialize_flashcards(file_path):
     global to_learn
@@ -59,6 +59,7 @@ def initialize_flashcards(file_path):
         to_learn = df.to_dict(orient="records")
 
 
+# ---------------------------- LOAD SELECTED FILE CARD ------------------------------- #
 # Define a function to load the selected file from the dropdown list
 def load_selected_file():
     selected_file = selected_file_var.get()
@@ -71,12 +72,7 @@ def load_selected_file():
     next_card()
 
 
-# Call this at the beginning of the script to initialize flashcards with a default file
-initialize_flashcards("data/words_to_learn.csv")
-
-
-# Google Text to Speech
-# Updated text_to_speech function to consider the "Auto-pronounce" and manual pronunciation
+# ---------------------------- GOOGLE TEXT TO SPEECH ------------------------------- #
 # Updated text_to_speech function to consider the "Auto-pronounce" and manual pronunciation
 def text_to_speech(text, manual=False):
     global pending_pronunciation
@@ -87,7 +83,7 @@ def text_to_speech(text, manual=False):
         playsound(temp_file.name + ".mp3")
         pending_pronunciation = None  # Reset the pending pronunciation after it's played
     elif not auto_pronounce and not manual:
-        # If "Auto Pronounce" is off and it's not a manual pronunciation, do nothing
+        # If "Auto Pronounce" is off, and it's not a manual pronunciation, do nothing
         pending_pronunciation = None
     else:
         # Handle manual pronunciation
@@ -98,6 +94,7 @@ def text_to_speech(text, manual=False):
         pending_pronunciation = None
 
 
+# ---------------------------- SHOW REMAINING WORDS ------------------------------- #
 # Function to show the number of remaining words
 def get_remaining_words_count():
     try:
@@ -107,12 +104,14 @@ def get_remaining_words_count():
         return 0
 
 
+# ---------------------------- AUTO PRONOUNCE ------------------------------- #
 # Function to toggle the "Auto-pronounce" feature
 def toggle_auto_pronounce():
     global auto_pronounce
     auto_pronounce = auto_pronounce_var.get()
 
 
+# ---------------------------- WORD IS KNOWN  ------------------------------- #
 def is_known():
     global current_card
     if current_card in to_learn:
@@ -131,6 +130,7 @@ def is_known():
         button_wrong.config(state=DISABLED)
 
 
+# ---------------------------- TOGGLE DIRECTION ------------------------------- #
 # In the "toggle_direction" function, update the "Auto-pronounce" state
 def toggle_direction():
     global current_direction
@@ -145,6 +145,7 @@ def toggle_direction():
         button_direction.config(text="Switch to Malay to English")
 
 
+# ---------------------------- TOGGLE TRANSLATION  ------------------------------- #
 def toggle_translation():
     if current_direction == "malay_to_english":
         if canvas.itemcget(card_title, "text") == "Malay":
@@ -162,6 +163,7 @@ def toggle_translation():
             canvas.itemconfig(card_word, text=current_card["English"])
 
 
+# ---------------------------- RESTART PROGRAM ------------------------------- #
 def restart_program():
     try:
         os.remove("data/words_to_learn.csv")
@@ -180,40 +182,7 @@ def restart_program():
     word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
 
 
-# In the "next_card" function, call the text_to_speech function for the first card
-def next_card():
-    global current_card, flip_timer, pending_pronunciation
-    root.after_cancel(flip_timer)
-
-    if pending_pronunciation is not None:
-        root.after_cancel(pending_pronunciation)  # Cancel any pending pronunciation
-
-    # Reset the 'pronounced' attribute each time a new card is displayed
-    text_to_speech.pronounced = False
-
-    if to_learn:
-        current_card = random.choice(to_learn)
-        if current_direction == "malay_to_english":
-            canvas.itemconfig(card_word, text=current_card["Malay"], fill="black")
-            canvas.itemconfig(card_title, text="Malay", fill="black")
-        else:
-            canvas.itemconfig(card_word, text=current_card["English"], fill="black")
-            canvas.itemconfig(card_title, text="English", fill="black")
-        canvas.itemconfig(card_background, image=card_front_img)
-        flip_timer = root.after(3000, func=flip_card)
-
-        # Check if "Auto-pronounce" is enabled and the direction is "malay_to_english"
-        if auto_pronounce and current_direction == "malay_to_english":
-            # Delay the pronunciation by 1000 milliseconds (1 second)
-            pending_pronunciation = root.after(1000, lambda: text_to_speech(current_card["Malay"]))
-    else:
-        canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
-        canvas.itemconfig(card_word, text="")
-        button_right.config(state=DISABLED)
-        button_wrong.config(state=DISABLED)
-        initialize_flashcards(f"data/{selected_file_var.get()}")
-
-
+# ---------------------------- FLIP CARD ------------------------------- #
 # In the "flip_card" function, call the text_to_speech function for the Malay word only if "Auto Pronounce" is enabled
 def flip_card():
     if current_direction == "malay_to_english":
@@ -230,12 +199,45 @@ def flip_card():
 
     canvas.itemconfig(card_background, image=card_back_img)
 
+
+# ---------------------------- NEXT CARD ------------------------------- #
+# In the "next_card" function, call the text_to_speech function for the first card
+def next_card():
+    global current_card, flip_timer, pending_pronunciation
+    root.after_cancel(flip_timer)
+
+    if pending_pronunciation is not None:
+        root.after_cancel(pending_pronunciation)
+
+    text_to_speech.pronounced = False
+
+    if to_learn:
+        current_card = random.choice(to_learn)
+        if current_direction == "malay_to_english":
+            canvas.itemconfig(card_word, text=current_card["Malay"], fill="black")
+            canvas.itemconfig(card_title, text="Malay", fill="black")
+        else:
+            canvas.itemconfig(card_word, text=current_card["English"], fill="black")
+            canvas.itemconfig(card_title, text="English", fill="black")
+        canvas.itemconfig(card_background, image=card_front_img)
+
+        # Use the user-selected flip timer value
+        flip_timer = root.after(int(flip_timer_scale.get()), func=flip_card)
+
+        if auto_pronounce and current_direction == "malay_to_english":
+            pending_pronunciation = root.after(1000, lambda: text_to_speech(current_card["Malay"]))
+    else:
+        canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
+        canvas.itemconfig(card_word, text="")
+        button_right.config(state=DISABLED)
+        button_wrong.config(state=DISABLED)
+        initialize_flashcards(f"data/{selected_file_var.get()}")
+
+
 # ---------------------------- UI SETUP ------------------------------- #
 root = Tk()
 root.title("Flashcards: Learn Malay")
 root.config(pady=20, bg="#B1DDC6", width=1300, height=600)
-
-flip_timer = root.after(3000, func=flip_card)
 
 # Card FRONT
 canvas = Canvas(width=900, height=600, bg="#B1DDC6")
@@ -246,7 +248,6 @@ card_title = canvas.create_text(450, 100, text="Title", font=("Arial", 25, "ital
 card_word = canvas.create_text(450, 200, text="Word", font=("Arial", 30, "bold"), width=700)
 canvas.config(bg="#B1DDC6", highlightthickness=0)
 canvas.place(x=10, y=20)
-
 
 # ---------------------------- BUTTONS FOR RIGHT AND WRONG ------------------------------- #
 # Button wrong
@@ -259,19 +260,25 @@ img_right = PhotoImage(file="images/right.png")
 button_right = Button(image=img_right, width=100, height=100, command=is_known)
 button_right.place(x=470, y=360)
 
-# ---------------------------- BUTTONS FOR FUNCTIONS ------------------------------- #
+# ---------------------------- TOGGLE DIRECTION ------------------------------- #
 
 # Button to toggle direction
 button_direction = Button(root, text="Switch to English to Malay", font=("Arial", 15, "bold"), width=25, command=toggle_direction)
 button_direction.place(x=900, y=50)
 
+# ---------------------------- TOGGLE TRANSLATION ------------------------------- #
+
 # Button to toggle translation
 button_toggle = Button(root, text="Toggle Translation", font=("Arial", 15, "bold"), width=25, command=toggle_translation)
 button_toggle.place(x=900, y=100)
 
-# Button to restart the program
-button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "normal"), width=25, command=restart_program)
-button_restart.place(x=900, y=450)
+# ---------------------------- GOOGLE TEXT TO SPEECH / PRONOUNCE ------------------------------- #
+
+# Button for Google text to speech
+pronounce_button = Button(root, text="Pronounce", font=("Arial", 14, "bold"), width=25, command=lambda: text_to_speech(current_card["Malay"], manual=True))
+pronounce_button.place(x=900, y=150)
+
+# ---------------------------- FILE SELECTION DROPDOWN AND LOADING ------------------------------- #
 
 # Add a dropdown list to select the file
 available_files = os.listdir("data")
@@ -280,22 +287,35 @@ selected_file_var = StringVar(root)
 selected_file_var.set("1-GettingStarted.csv")  # Default selection
 file_dropdown = OptionMenu(root, selected_file_var, *available_files)
 file_dropdown.configure(font=("Arial", 14, "normal"), width=25)  # Apply font and width styling
-file_dropdown.place(x=900, y=250)
+file_dropdown.place(x=900, y=220)
 
 # Button to load the selected file
 load_file_button = Button(root, text="Load selected File", font=("Arial", 14, "normal"), width=25, command=load_selected_file)
-load_file_button.place(x=900, y=300)
+load_file_button.place(x=900, y=265)
 
-# Button for Google text to speech
-pronounce_button = Button(root, text="Pronounce", font=("Arial", 14, "bold"), width=25, command=lambda: text_to_speech(current_card["Malay"], manual=True))
-pronounce_button.place(x=900, y=150)
+# ---------------------------- SET THE FLIP CARD TIMER ------------------------------- #
+
+# Create a Scale widget to allow the user to set the flip_card timer.
+flip_timer_scale = Scale(root, from_=3000, to=10000, orient=HORIZONTAL, length=200, resolution=100)
+flip_timer_scale.set(3000)  # Set the default value
+flip_timer_scale.place(x=900, y=320)  # Adjust the placement according to your UI
+
+# Update the flip_timer initialization to use the scale value
+flip_timer = root.after(int(flip_timer_scale.get()), func=flip_card)
+
+# ---------------------------- SEE HOW MANY WORDS REMAINING ------------------------------- #
 
 # Show how many words remain in words to learn list
 word_count_label = Label(root, text=f"Words to Learn: {get_remaining_words_count()}", font=("Arial", 14))
 word_count_label.place(x=900, y=420)
 
-# NEW on/off switch Toggle button for "Auto-pronounce"
-# -------- Auto Pronounce Check Button --------#
+# ---------------------------- RESTART PROGRAM / CLEAR WORDS TO LEARN ------------------------------- #
+
+# Button to restart the program
+button_restart = Button(root, text="Clear words to learn", font=("Arial", 15, "normal"), width=25, command=restart_program)
+button_restart.place(x=900, y=450)
+
+# ---------------------------- AUTO PRONOUNCE CHECK BUTTON ------------------------------- #
 
 # Create a BooleanVar to track the state of Auto Pronounce
 auto_pronounce_var = BooleanVar()
@@ -309,6 +329,9 @@ auto_pronounce_switch = ttk.Checkbutton(root, text="Auto Pronounce?", variable=a
 auto_pronounce_switch.place(x=900, y=500)
 
 # ---------------------------- LOAD THE PROGRAM ------------------------------- #
+
+# Call this at the beginning of the script to initialize flashcards with a default file
+initialize_flashcards("data/words_to_learn.csv")
 
 next_card()
 
