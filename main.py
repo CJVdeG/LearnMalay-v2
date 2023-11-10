@@ -189,9 +189,10 @@ def flip_card():
         canvas.itemconfig(card_title, text="English", fill="white")
         canvas.itemconfig(card_word, text=current_card["English"], fill="white")
 
+        # Remove this function call because it's already being called (double) in the next_card function
         # Pronounce the Malay word if "Auto Pronounce" is enabled
-        if auto_pronounce:
-            text_to_speech(current_card["Malay"])
+        # if auto_pronounce:
+        #     text_to_speech(current_card["Malay"])
 
     else:
         canvas.itemconfig(card_title, text="Malay", fill="white")
@@ -224,8 +225,10 @@ def next_card():
         # Use the user-selected flip timer value
         flip_timer = root.after(int(flip_timer_scale.get()), func=flip_card)
 
+        # Auto pronounce the Malay word if auto pronounce is enabled
         if auto_pronounce and current_direction == "malay_to_english":
             pending_pronunciation = root.after(1000, lambda: text_to_speech(current_card["Malay"]))
+
     else:
         canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
         canvas.itemconfig(card_word, text="")
