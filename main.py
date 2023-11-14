@@ -137,12 +137,12 @@ def toggle_direction():
     global auto_pronounce
     if current_direction == "malay_to_english":
         current_direction = "english_to_malay"
-        button_direction.config(text="Switch to English to Malay")
+        button_direction.config(text="Switch to Malay to English")
         # Disable "Auto-pronounce" when the direction changes
         auto_pronounce = False
     else:
         current_direction = "malay_to_english"
-        button_direction.config(text="Switch to Malay to English")
+        button_direction.config(text="Switch to English to Malay")
 
 
 # ---------------------------- TOGGLE TRANSLATION  ------------------------------- #
@@ -227,7 +227,7 @@ def next_card():
 
         # Auto pronounce the Malay word if auto pronounce is enabled
         if auto_pronounce and current_direction == "malay_to_english":
-            pending_pronunciation = root.after(1000, lambda: text_to_speech(current_card["Malay"]))
+            pending_pronunciation = root.after(100, lambda: text_to_speech(current_card["Malay"]))
 
     else:
         canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn")
