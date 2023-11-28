@@ -21,6 +21,9 @@ auto_pronounce = False
 # Add variable for storing after IDs
 pending_pronunciation = None
 
+# Keep track of difficult words
+difficult_words = []
+
 # ---------------------- FRONT FLASH CARD FUNCTIONALITY ----------------------- #
 # Creating a list of dictionaries from the CSV file using a dataframe
 
@@ -70,6 +73,24 @@ def load_selected_file():
     button_right.config(state=NORMAL)
 
     next_card()
+
+
+# ---------------------------- MARK WORD AS DIFFICULT ------------------------------- #
+def mark_difficult_word():
+    global current_card
+    global difficult_words
+
+    difficult_word = {
+        "Malay": current_card["Malay"],
+        "English": current_card["English"]
+    }
+
+    difficult_words.append(difficult_word)
+    data = pd.DataFrame(difficult_words)
+    data.to_csv("data/1-DifficultWords.csv", index=False)
+
+    next_card()
+    word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
 
 
 # ---------------------------- GOOGLE TEXT TO SPEECH ------------------------------- #
@@ -252,7 +273,7 @@ card_word = canvas.create_text(450, 200, text="Word", font=("Arial", 30, "bold")
 canvas.config(bg="#B1DDC6", highlightthickness=0)
 canvas.place(x=10, y=20)
 
-# ---------------------------- BUTTONS FOR RIGHT AND WRONG ------------------------------- #
+# ---------------------------- BUTTONS FOR RIGHT AND WRONG AND DIFFICULT ------------------------------- #
 # Button wrong
 img_wrong = PhotoImage(file="images/wrong.png")
 button_wrong = Button(image=img_wrong, width=100, height=100, command=next_card)
@@ -262,6 +283,10 @@ button_wrong.place(x=320, y=360)
 img_right = PhotoImage(file="images/right.png")
 button_right = Button(image=img_right, width=100, height=100, command=is_known)
 button_right.place(x=470, y=360)
+
+# Button to mark the current word as difficult
+button_difficult = Button(root, text="Mark as Difficult", font=("Arial", 15, "normal"), width=25, command=mark_difficult_word)
+button_difficult.place(x=300, y=480)
 
 # ---------------------------- TOGGLE DIRECTION ------------------------------- #
 
