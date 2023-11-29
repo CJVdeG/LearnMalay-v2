@@ -89,8 +89,27 @@ def mark_difficult_word():
     data = pd.DataFrame(difficult_words)
     data.to_csv("data/1-DifficultWords.csv", index=False)
 
+    # Remove the word from the to_learn list
+    to_learn.remove(current_card)
+    data = pd.DataFrame(to_learn)
+    data.to_csv("data/words_to_learn.csv", index=False)
+
     next_card()
     word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
+    difficult_word_count_label.config(text=f"Difficult words: {get_difficult_words_count()}")
+
+
+# ---------------------------- CLEAR DIFFICULT WORDS ------------------------------- #
+def clear_difficult_words():
+    try:
+        os.remove("data/1-DifficultWords.csv")
+    except FileNotFoundError:
+        pass
+
+    next_card()  # Load the next card after clearing difficult words
+
+    # Update the difficult word count label
+    difficult_word_count_label.config(text=f"Difficult words: {get_difficult_words_count()}")
 
 
 # ---------------------------- GOOGLE TEXT TO SPEECH ------------------------------- #
@@ -113,6 +132,16 @@ def text_to_speech(text, manual=False):
         tts.save(temp_file.name + ".mp3")
         playsound(temp_file.name + ".mp3")
         pending_pronunciation = None
+
+
+# ---------------------------- SHOW REMAINING WORDS ------------------------------- #
+# Function to show the number of remaining words
+def get_difficult_words_count():
+    try:
+        df = pd.read_csv("data/1-DifficultWords.csv")
+        return len(df)
+    except FileNotFoundError:
+        return 0
 
 
 # ---------------------------- SHOW REMAINING WORDS ------------------------------- #
@@ -141,6 +170,7 @@ def is_known():
         data.to_csv("data/words_to_learn.csv", index=False)
         next_card()
         word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
+        difficult_word_count_label.config(text=f"Difficult words: {get_difficult_words_count()}")
     else:
         # Handle the case when there are no more words to learn
         canvas.itemconfig(card_title, text="Done. Load new file or clear words to learn.")
@@ -201,6 +231,9 @@ def restart_program():
 
     # Update the word count label
     word_count_label.config(text=f"Words to Learn: {get_remaining_words_count()}")
+
+    # Update the difficult word count label
+    difficult_word_count_label.config(text=f"Difficult words: {get_difficult_words_count()}")
 
 
 # ---------------------------- FLIP CARD ------------------------------- #
@@ -285,8 +318,8 @@ button_right = Button(image=img_right, width=100, height=100, command=is_known)
 button_right.place(x=470, y=360)
 
 # Button to mark the current word as difficult
-button_difficult = Button(root, text="Mark as Difficult", font=("Arial", 15, "normal"), width=25, command=mark_difficult_word)
-button_difficult.place(x=300, y=480)
+button_difficult = Button(root, text="Mark as Difficult", font=("Arial", 13, "normal"), width=18, command=mark_difficult_word)
+button_difficult.place(x=340, y=480)
 
 # ---------------------------- TOGGLE DIRECTION ------------------------------- #
 
@@ -331,11 +364,24 @@ flip_timer_scale.place(x=900, y=320)  # Adjust the placement according to your U
 # Update the flip_timer initialization to use the scale value
 flip_timer = root.after(int(flip_timer_scale.get()), func=flip_card)
 
+# ---------------------------- SEE HOW MANY DIFFICULT WORDS REMAINING ------------------------------- #
+
+# Show how many words remain in words to learn list
+difficult_word_count_label = Label(root, text=f"Difficult words: {get_difficult_words_count()}", font=("Arial", 14))
+difficult_word_count_label.place(x=900, y=395)
+
+
 # ---------------------------- SEE HOW MANY WORDS REMAINING ------------------------------- #
 
 # Show how many words remain in words to learn list
 word_count_label = Label(root, text=f"Words to Learn: {get_remaining_words_count()}", font=("Arial", 14))
 word_count_label.place(x=900, y=420)
+
+# ---------------------------- BUTTON TO CLEAR DIFFICULT WORDS LIST ------------------------------- #
+
+# Button to restart the program
+button_clear_difficult_words = Button(root, text="Clear difficult words", font=("Arial", 15, "normal"), width=25, command=clear_difficult_words)
+button_clear_difficult_words.place(x=900, y=490)
 
 # ---------------------------- RESTART PROGRAM / CLEAR WORDS TO LEARN ------------------------------- #
 
@@ -351,10 +397,10 @@ auto_pronounce_var.set(auto_pronounce)  # Initialize the state
 
 # Create a style for the Auto pronounce checkbox button
 style = ttk.Style()
-style.configure("TCheckbutton", font=("Arial", 15))
+style.configure("TCheckbutton", font=("Arial", 13))
 # Replace the "Toggle button for Auto-pronounce" section
-auto_pronounce_switch = ttk.Checkbutton(root, text="Auto Pronounce?", variable=auto_pronounce_var, command=toggle_auto_pronounce)
-auto_pronounce_switch.place(x=900, y=500)
+auto_pronounce_switch = ttk.Checkbutton(root, text="Auto Pronounce", variable=auto_pronounce_var, command=toggle_auto_pronounce)
+auto_pronounce_switch.place(x=900, y=189)
 
 # ---------------------------- LOAD THE PROGRAM ------------------------------- #
 
