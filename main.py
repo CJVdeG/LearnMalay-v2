@@ -298,8 +298,8 @@ root.config(pady=20, bg="#B1DDC6", width=1300, height=600)
 
 # Card FRONT
 canvas = Canvas(width=900, height=600, bg="#B1DDC6")
-card_front_img = PhotoImage(file="images/card_front.png", width=800, height=526)
-card_back_img = PhotoImage(file="images/card_back.png", width=800, height=526)
+card_front_img = PhotoImage(file="images/card_front.gif", width=800, height=526)
+card_back_img = PhotoImage(file="images/card_back.gif", width=800, height=526)
 card_background = canvas.create_image(450, 280, image=card_front_img)
 card_title = canvas.create_text(450, 100, text="Title", font=("Arial", 25, "italic"))
 card_word = canvas.create_text(450, 200, text="Word", font=("Arial", 30, "bold"), width=700)
@@ -308,12 +308,12 @@ canvas.place(x=10, y=20)
 
 # ---------------------------- BUTTONS FOR RIGHT AND WRONG AND DIFFICULT ------------------------------- #
 # Button wrong
-img_wrong = PhotoImage(file="images/wrong.png")
+img_wrong = PhotoImage(file="images/wrong.gif")
 button_wrong = Button(image=img_wrong, width=100, height=100, command=next_card)
 button_wrong.place(x=320, y=360)
 
 # Button right
-img_right = PhotoImage(file="images/right.png")
+img_right = PhotoImage(file="images/right.gif")
 button_right = Button(image=img_right, width=100, height=100, command=is_known)
 button_right.place(x=470, y=360)
 
